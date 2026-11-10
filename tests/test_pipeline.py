@@ -1,4 +1,6 @@
-"""테스트 케이스 — 책임: 고준호 / 설계·실행: 안태현. 표준 라이브러리 unittest만 사용.
+# 담당: 고준호 / 리뷰: 안태현
+# AI 보조: Claude Code — 테스트 케이스 작성(시나리오와 함수별 단위 테스트), 담당자가 검토·테스트
+"""테스트 케이스 — 표준 라이브러리 unittest만 사용.
 
 메서드 이름은 한국어로 둔다. `python -m unittest discover tests -v` 출력이
 plan.md 10장의 결과표 재료로 그대로 쓰이기 때문이다. (지역 변수는 snake_case)
@@ -94,6 +96,21 @@ class TestC1Clean(unittest.TestCase):
         raw_transactions = [{"date": "2026-09-01", "merchant": "스타벅스", "amount": 5000}]
         clean_transactions(raw_transactions)
         self.assertEqual(len(raw_transactions), 1)
+
+    def test_숫자가_아닌_날짜_dict가_아닌_항목_문자열이_아닌_가맹점_제외(self):
+        """C1을 통과한 거래가 C2에서 예외를 내지 않도록 입구에서 걸러낸다."""
+        raw_transactions = [
+            {"date": "2026-09-XX", "merchant": "스타벅스", "amount": 5000},   # 숫자 아닌 날짜
+            {"date": "2026-O9-05", "merchant": "스타벅스", "amount": 5000},   # 영문 O 오타
+            {"date": "2026-09-05", "merchant": 123, "amount": 5000},          # 문자열 아닌 가맹점
+            None,                                                              # dict가 아님
+            {"date": "2026-09-09", "merchant": "교촌치킨", "amount": 20000},   # 정상
+        ]
+        result = clean_transactions(raw_transactions)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["merchant"], "교촌치킨")
+        # 걸러진 결과는 C2까지 예외 없이 흘러간다
+        label_transactions(result, label_rules)
 
     def test_bool_금액_제외(self):
         """True는 int로 취급되지만 금액이 아니므로 제외한다."""

@@ -17,9 +17,10 @@
 - [5. 데이터 스키마](#5-데이터-스키마)
   - [5-1. 카테고리 (6개 고정)](#5-1-카테고리-6개-고정)
   - [5-2. 샘플 (기획서 원문)](#5-2-샘플-기획서-원문)
-- [6. IPO 파이프라인](#6-ipo-파이프라인)
-  - [6-1. 데이터 흐름](#6-1-데이터-흐름)
-  - [6-2. 시스템 아키텍처](#6-2-시스템-아키텍처)
+- [6. 시스템 아키텍처](#6-시스템-아키텍처)
+  - [6-1. 구성도](#6-1-구성도)
+  - [6-2. IPO 단계표](#6-2-ipo-단계표)
+  - [6-3. 사고 과정 반영 (Keep / Drop / 패턴)](#6-3-사고-과정-반영-keep--drop--패턴)
 - [7. 함수 명세](#7-함수-명세)
   - [C1 `clean_transactions(transactions) -> list`](#c1-clean_transactionstransactions---list)
   - [C2 `label_transactions(cleaned, label_rules) -> list`](#c2-label_transactionscleaned-label_rules---list)
@@ -32,12 +33,12 @@
 - [8. 구현 결정 사항 (기획서에 명시되지 않아 이 문서에서 정한 것)](#8-구현-결정-사항-기획서에-명시되지-않아-이-문서에서-정한-것)
 - [9. 더미 데이터 설계 (dummy_data.py)](#9-더미-데이터-설계-dummy_datapy)
 - [10. 테스트 케이스 (tests/test_pipeline.py)](#10-테스트-케이스-teststest_pipelinepy)
-- [11. Git 협업 규칙](#11-git-협업-규칙)
-- [12. 역할 분담 및 일정](#12-역할-분담-및-일정)
-- [13. Claude Code 작업 지침](#13-claude-code-작업-지침)
-  - [구현 순서](#구현-순서)
-  - [완료 기준 (Definition of Done)](#완료-기준-definition-of-done)
-  - [하지 말 것](#하지-말-것)
+  - [10-1. 실행 결과](#10-1-실행-결과)
+- [11. 역할 분담 및 일정](#11-역할-분담-및-일정)
+  - [11-1. 모듈(함수) 책임표](#11-1-모듈함수-책임표)
+  - [11-2. 기능 역할 배정](#11-2-기능-역할-배정)
+  - [11-3. 마일스톤](#11-3-마일스톤)
+- [12. 이슈 해결 목록](#12-이슈-해결-목록)
 
 ---
 
@@ -61,7 +62,7 @@
 - **Python**: Colab 기본 런타임 버전 기준 (로컬 테스트는 Python 3.10 이상)
 - **라이브러리 범위** (근거: 기획서 3-6 ④, 3-1 제약 조건, 3-2 Drop)
   - 솔루션 코드(C1~C6, main): 외부 라이브러리 없이 List · Dict · if · for · 함수로만 구현. 딕셔너리 복사는 `dict(거래)`로 처리
-  - 개발 도구(`tools/build_notebook.py`, `tests/`): Python 표준 라이브러리(`json`, `unittest`)만 사용. 제출 로직에는 포함하지 않음
+  - 개발 도구(`tools/build_notebook.py`, `tests/`): Python 표준 라이브러리(`json`, `unittest` 등)만 사용. 제출 로직에는 포함하지 않음
   - 금지: pandas, numpy, scikit-learn 등 외부 라이브러리, 머신러닝, 실제 CSV 파일 읽기, 실시간 연동
 
 ### 2-1. Colab 연결 시 주의사항 (중요)
@@ -76,22 +77,23 @@
 ```
 group03-card-saving-suggester/
 ├── docs/
-│   └── plan.md                   # 이 문서
-├── README.md                     # 실행 방법, 팀원·역할 (담당: 정하나)
+│   ├── plan.md                   # 이 문서
+│   └── architecture.svg          # 시스템 아키텍처 그림
+├── README.md                     # 프로젝트 개요 · 핵심 · 아키텍처 · 실행 방법
 ├── .gitignore                    # __pycache__/, .ipynb_checkpoints/, .DS_Store
 ├── src/
 │   ├── __init__.py
-│   ├── dummy_data.py             # transactions, label_rules, 테스트용 데이터셋 (고준호)
-│   ├── c1_clean.py               # clean_transactions (안태현)
-│   ├── c2_label.py               # label_transactions (고준호)
-│   ├── c3_fixed.py               # mark_fixed_repeats (고준호)
-│   ├── c4_sum.py                 # sum_by_month_category (정하나)
-│   ├── c5_repeat_ratio.py        # calc_repeat_ratio (안태현)
-│   ├── c5_savings.py             # calc_savings (정하나)
-│   ├── c6_suggest.py             # make_suggestion (안태현)
-│   └── main.py                   # main — C1~C6 연결 (정하나)
+│   ├── dummy_data.py             # transactions, label_rules, 테스트용 데이터셋
+│   ├── c1_clean.py               # clean_transactions
+│   ├── c2_label.py               # label_transactions
+│   ├── c3_fixed.py               # mark_fixed_repeats
+│   ├── c4_sum.py                 # sum_by_month_category
+│   ├── c5_repeat_ratio.py        # calc_repeat_ratio
+│   ├── c5_savings.py             # calc_savings
+│   ├── c6_suggest.py             # make_suggestion
+│   └── main.py                   # main — C1~C6 연결
 ├── tests/
-│   └── test_pipeline.py          # unittest 기반 테스트 케이스 (고준호·안태현)
+│   └── test_pipeline.py          # unittest 기반 테스트 케이스
 ├── tools/
 │   └── build_notebook.py         # src/*.py → notebooks/ 노트북 생성 (표준 json만 사용)
 └── notebooks/
@@ -104,34 +106,38 @@ group03-card-saving-suggester/
   from src.c1_clean import clean_transactions  # notebook:skip
   ```
 - `build_notebook.py`는 `# notebook:skip`이 붙은 줄을 제거하고 아래 순서로 셀을 만든다.
-  1. 마크다운: 제목, 문제 정의, 사용자·목표·제약, 성공 기준
-  2. 코드: `dummy_data.py` (셀 상단 주석과 마크다운에 **"더미 데이터"** 명시)
-  3. 마크다운 + 코드: C1 → C2 → C3 → C4 → calc_repeat_ratio → C5 → C6 (각 셀 앞에 IPO 요약 마크다운, 담당자 표기)
-  4. 코드: `main` 정의 + `main()` 호출
-  5. 코드: 테스트 케이스 실행 셀 (정상 / 후보 0개 / 값 누락 결과 출력)
+  1. 마크다운: 제목, 문제 정의, 실행 방법("런타임 → 모두 실행"), 사용자·목표·제약, 팀원·담당 함수, 성공 기준, 시스템 아키텍처 그림
+  2. 마크다운: 사고 과정 — 추상화(Keep/Drop), 분해(IPO), 패턴, 엣지 케이스
+  3. 코드: `dummy_data.py` (셀 상단 주석과 마크다운에 **"더미 데이터"** 명시)
+  4. 마크다운 + 코드: C1 → C2 → C3 → C4 → calc_repeat_ratio → C5 → C6 (각 셀 앞에 IPO 요약 마크다운)
+  5. 코드: `main` 정의 셀 → 마크다운("실행 결과") → `main()` 호출 셀 (실행 결과 위치를 발표·녹화 때 가리키기 쉽도록 2개 셀로 나눈다)
+  6. 코드: 테스트 케이스 실행 셀 (정상 / 후보 0개 / 값 누락 결과 출력)
 - `main.py`의 `if __name__ == "__main__":` 블록은 노트북에서 `main()` 호출 셀로 대체한다.
-- 생성되는 노트북은 출력(outputs)이 비어 있는 상태로 커밋한다.
+- 제출용 노트북은 "모두 실행" 결과가 출력된 채로 저장한다 (가이드 7장 제출 상태). `build_notebook.py`가 코드 셀을 순서대로 실행해 출력까지 채워 주므로, 재생성하면 결과가 그대로 유지된다. 출력을 비우려면 `--no-output`을 붙인다.
+- 모든 코드 셀(= `src/*.py` 한 파일)의 첫 줄에는 `# 담당: 이름 / 리뷰: 이름` 주석이 들어간다 (가이드 7장. 11장 책임표와 같아야 한다).
 
 ### 3-2. 로컬 확인 명령
 ```bash
 python -m src.main                       # 제안 문장 1줄 출력
 python -m unittest discover tests        # 테스트 실행
-python tools/build_notebook.py           # 노트북 재생성
+python tools/build_notebook.py           # 노트북 재생성 (실행 결과 포함)
+python tools/build_notebook.py --no-output   # 출력을 비운 노트북 생성
 ```
 
 ---
 
 ## 4. 코딩 규칙
 
-- **함수명·딕셔너리 키는 기획서 표기(snake_case)를 그대로 사용**한다. 제출 문서(기획서 3-4, 3-5, 역할 분담표)와 이름이 일치해야 하므로 임의로 바꾸지 않는다. 지역 변수도 snake_case로 통일한다.
-- **주석과 docstring은 한국어**로 작성한다.
+- **함수명·딕셔너리 키는 기획서 표기(snake_case)를 그대로 사용**한다. 제출 문서(기획서 3-4, 3-5)와 이름이 일치해야 하므로 임의로 바꾸지 않는다. 지역 변수도 snake_case로 통일한다.
+- **주석과 docstring은 한국어**로 작성한다. 각 모듈 파일 첫 줄에는 `# 담당: 이름 / 리뷰: 이름` 주석을 단다 (11장 책임표와 일치).
+- AI 도움을 받은 파일은 둘째 줄에 `# AI 보조: 도구 — 무엇을, 담당자가 검토·테스트` 주석을 단다 (가이드 13장). 설명할 수 없는 코드는 제출하지 않는다.
 - 각 함수는 입력을 직접 수정하지 않고 **새 리스트/딕셔너리를 반환**한다 (C3도 복사본을 고쳐 반환).
 - 함수 하나 = 기획서의 IPO 한 단계. 함수 간 데이터는 반드시 **반환값 → 다음 함수의 인자**로만 전달한다 (전역 변수 의존 금지, 상수 제외).
-- 상수는 `src/dummy_data.py` 상단 또는 각 모듈 상단에 대문자로 둔다.
+- 상수는 **사용하는 모듈 상단**에 대문자로 둔다. `dummy_data.py`에 두고 import하면 그 줄이 `# notebook:skip`으로 지워져 노트북에서 `NameError`가 나기 때문이다.
   ```python
-  SAVING_WEIGHT = 0.6      # 절감 여지 비율 가중치
-  REPEAT_WEIGHT = 0.4      # 반복 결제 비율 가중치
-  FALLBACK_CATEGORY = "기타"   # 미매칭 카테고리 (출력 표기는 "기타(고정)")
+  SAVING_WEIGHT = 0.6      # 절감 여지 비율 가중치 (c5_savings.py)
+  REPEAT_WEIGHT = 0.4      # 반복 결제 비율 가중치 (c5_savings.py)
+  FALLBACK_CATEGORY = "기타"   # 미매칭 카테고리 (c2_label.py, 출력 표기는 "기타(고정)")
   ```
 - 카테고리 문자열의 가운뎃점은 `·`(U+00B7)로 통일한다: `"카페·간식"`.
 
@@ -173,17 +179,15 @@ label_rules = [  # 라벨 규칙표 (더미)
 
 ---
 
-## 6. IPO 파이프라인
+## 6. 시스템 아키텍처
 
-### 6-1. 데이터 흐름
+### 6-1. 구성도
 
-```
-transactions ──C1──▶ cleaned ──C2(+label_rules)──▶ labeled ──C3──▶ labeled(보정)
-                                                                     │
-                     ┌───────────────────────────────────────────────┤
-                     ▼                                               ▼
-               C4 → monthly_totals ──▶ C5(+labeled, this_month) ──▶ savings ──C6──▶ 제안 문장 1줄
-```
+![시스템 아키텍처](architecture.svg)
+
+Project 1의 3개 컴포넌트와의 대응: **내역 분류기 = C1+C2+C3**, **지출 비교기 = C4+C5(+calc_repeat_ratio)**, **제안 생성기 = C6**.
+
+### 6-2. IPO 단계표
 
 | 단계 | 함수 | Input | Process | Output |
 |---|---|---|---|---|
@@ -196,93 +200,41 @@ transactions ──C1──▶ cleaned ──C2(+label_rules)──▶ labeled �
 | C6 | `make_suggestion` | ↑C5 출력 | 점수 내림차순 1위로 문장 생성, 비면 "절감 여지 없음" | str |
 | — | `main` | 없음 | C1→C6 순서 호출 후 print | 출력 |
 
-Project 1의 3개 컴포넌트와의 대응: **내역 분류기 = C1+C2+C3**, **지출 비교기 = C4+C5(+calc_repeat_ratio)**, **제안 생성기 = C6**.
+### 6-3. 사고 과정 반영 (Keep / Drop / 패턴)
 
-### 6-2. 시스템 아키텍처
-
-컴포넌트 구성(Project 1 대응)과 개발 → 빌드 → 실행 구조를 한 장으로 나타낸 것이다. 실선은 데이터/산출물의 흐름, 점선은 참조·검증 관계다. (GitHub에서는 바로 렌더링되며, VS Code 미리보기는 Mermaid 지원 확장이 필요하다.)
-
-```mermaid
-flowchart TB
-    subgraph LOCAL["로컬 개발 환경 (VS Code · GitHub 레포 공유)"]
-        direction TB
-
-        subgraph SRC["src/ — 함수 모듈 (표준 문법만 사용)"]
-            direction TB
-            DD["dummy_data.py<br/>transactions · label_rules<br/>(더미 데이터)"]
-            MAIN["main.py<br/>main() → run_pipeline()"]
-
-            subgraph CLS["내역 분류기"]
-                direction LR
-                C1["C1 clean_transactions<br/>취소·중복 제거"]
-                C2["C2 label_transactions<br/>카테고리·재량 여부 부여"]
-                C3["C3 mark_fixed_repeats<br/>고정 반복 결제 보정"]
-                C1 --> C2 --> C3
-            end
-
-            subgraph CMP["지출 비교기"]
-                direction LR
-                C4["C4 sum_by_month_category<br/>월·카테고리 합계"]
-                C5["C5 calc_savings<br/>절감 여지·점수"]
-                RR["calc_repeat_ratio<br/>반복 결제 비율"]
-                C4 --> C5
-                RR -.-> C5
-            end
-
-            subgraph GEN["제안 생성기"]
-                C6["C6 make_suggestion<br/>점수 1위 문장화"]
-            end
-
-            DD -->|"transactions, label_rules"| MAIN
-            MAIN -->|"호출"| C1
-            C3 -->|"labeled"| C4
-            C5 -->|"savings"| C6
-        end
-
-        TEST["tests/test_pipeline.py<br/>unittest (정상·엣지·단위)"]
-        BUILD["tools/build_notebook.py<br/>표준 json만 사용<br/>'# notebook:skip' 줄 제거"]
-
-        TEST -.->|"검증"| MAIN
-        SRC ==>|"소스 병합"| BUILD
-    end
-
-    NB[("notebooks/card_saving_suggester.ipynb<br/>자체 완결형 · 출력 비움")]
-    BUILD ==>|"노트북 생성"| NB
-
-    subgraph COLAB["실행 환경 (Colab 런타임)"]
-        RUN["'모두 실행'<br/>src/ import 없이 동작"]
-    end
-
-    NB ==>|"GitHub → Colab 열기"| RUN
-    RUN --> OUT(["제안 문장 1줄 출력<br/>[제안] 카페·간식: …"])
-    C6 -.->|"문장 반환"| OUT
-```
-
-| 계층 | 구성 요소 | 역할 |
+| 구분 | 내용 | 이유 |
 |---|---|---|
-| 입력 | `dummy_data.py` | 실제 CSV 없이 더미 `transactions` · `label_rules`를 제공 |
-| 처리 | `src/c1~c6`, `calc_repeat_ratio` | 함수 하나 = IPO 한 단계. 반환값 → 다음 함수 인자로만 데이터 전달 |
-| 통합 | `main.py` | `run_pipeline()`으로 C1→C6를 연결, `main()`은 print만 담당 |
-| 검증 | `tests/test_pipeline.py` | 정상 / 후보 0개 / 빈 입력 / 값 누락 + 함수별 단위 테스트 |
-| 빌드 | `tools/build_notebook.py` | `src/*.py`를 합쳐 Colab에서 단독 실행되는 노트북 생성 |
-| 실행 | Colab 런타임 | 노트북 "모두 실행" → 제안 문장 1줄 |
+| Keep | 날짜(월·일), 가맹점명, 금액 | 월별 비교와 반복 결제 판단에 필요 |
+| Keep | 카테고리 6개, 재량 · 고정 구분 | 줄일 수 있는 돈만 비교하려고 |
+| Drop | 승인번호 · 할부 개월 · 사업자번호 · 업종 태그 | 제안 결과를 바꾸지 않음 (기획서 3-2 Drop 결정) |
+| Drop | 원본 `date` 문자열 | C2에서 월 · 일로 나눈 뒤 버림 |
+| Drop | 점수 2위 이하 후보, 예산 설정, 결제 차단 | 목표가 "하나만 줄이기"이고 범위 밖 |
+| Consider | 3개월 내내 같은 일 · 같은 금액 월 1건 가맹점 | 줄일 수 없는 고정 지출로 본다 (C3) |
+
+| 반복 패턴 | 나타나는 곳 |
+|---|---|
+| 규칙표를 위에서부터 훑어 처음 맞는 규칙에서 멈춘다 | C2 |
+| 키가 없으면 먼저 만들고 값을 더하거나 모은다 | C3 가맹점 묶기, C4 월 합계, `calc_repeat_ratio` 건수 세기 |
+| `for`로 훑으며 가장 작은 값을 찾는다 | C5 3개월 최저 월 |
+| 후보를 걸러 내고 점수로 줄 세워 1위만 고른다 | C5 → C6 |
 
 ---
 
 ## 7. 함수 명세
 
 ### C1 `clean_transactions(transactions) -> list`
-- 담당: 안태현 / 지원: 고준호 / 리뷰: 정하나 / 완료 목표: 11/13(금)
+- 완료 목표: 11/13(금)
 - 규칙
   1. 필수 키(`date`, `merchant`, `amount`)가 없거나 값이 `None`/빈 문자열이면 **제외**한다 (값 누락 테스트 대응, 에러 금지).
   2. `amount`가 `int`가 아니면 제외한다 (`bool`도 제외).
   3. `amount <= 0`이면 제외한다 (취소 건).
   4. `(date, merchant, amount)`가 이미 나온 거래와 완전히 같으면 제외한다 (중복 건). 처음 나온 1건만 남긴다.
-  5. `date`가 `"YYYY-MM-DD"` 형식(길이 10, `-` 위치 4·7)이 아니면 제외한다.
+  5. `date`가 `"YYYY-MM-DD"` 형식(길이 10, `-` 위치 4·7, 나머지 8자리는 숫자)이 아니면 제외한다 (숫자 확인이 없으면 `2026-09-XX`가 C1을 통과해 C2의 `int(date[8:10])`에서 에러가 난다).
+  6. 거래가 `dict`가 아니거나 `merchant`가 `str`이 아니면 제외한다 (C2의 `keyword in merchant`에서 에러가 나는 것을 막는다).
 - 원래 순서를 유지해 반환한다.
 
 ### C2 `label_transactions(cleaned, label_rules) -> list`
-- 담당: 고준호 / 지원: 정하나 / 리뷰: 안태현 / 완료 목표: 11/13(금)
+- 완료 목표: 11/13(금)
 - 규칙
   1. 거래마다 `label_rules`를 **위에서부터** 순회해 `keyword in merchant`인 첫 규칙을 적용하고 중단한다 (규칙표 순서가 우선순위. 구체적인 키워드를 위에 둔다. 예: "쿠팡이츠"를 "쿠팡"보다 위).
   2. 매칭 실패 시 `category="기타"`, `is_discretionary=False`.
@@ -290,7 +242,7 @@ flowchart TB
   4. 반환 필드: `month`, `day`, `merchant`, `category`, `is_discretionary`, `amount` (`date`는 버린다 — 추상화 결정).
 
 ### C3 `mark_fixed_repeats(labeled) -> list`
-- 담당: 고준호 / 지원: 안태현 / 리뷰: 정하나 / 완료 목표: 11/15(일)
+- 완료 목표: 11/15(일)
 - 규칙
   1. 대상 월 = `labeled`에 등장하는 거래월 집합. 대상 월이 3개가 아니면 아무것도 바꾸지 않고 복사본을 반환한다.
   2. 가맹점(`merchant` 문자열 전체 기준)별로 `(month, day, amount)` 목록을 모은다.
@@ -301,12 +253,12 @@ flowchart TB
   4. 이미 고정인 거래(예: 넷플릭스)는 결과가 같으므로 그대로 둔다.
 
 ### C4 `sum_by_month_category(labeled) -> dict`
-- 담당: 정하나 / 지원: 고준호 / 리뷰: 안태현 / 완료 목표: 11/13(금)
+- 완료 목표: 11/13(금)
 - `is_discretionary`가 `True`인 거래만 `totals[category][month] += amount`.
 - 재량 거래가 하나도 없으면 빈 dict `{}` 반환.
 
 ### `calc_repeat_ratio(labeled, category, month) -> float`
-- 담당: 안태현 / 지원: 정하나 / 리뷰: 고준호 / 완료 목표: 11/15(일)
+- 완료 목표: 11/15(일)
 - 규칙
   1. `category`, `month`가 일치하고 `is_discretionary=True`인 거래만 추린다.
   2. 0건이면 `0.0` 반환.
@@ -315,7 +267,7 @@ flowchart TB
   - 예: 스타벅스 4건, 메가커피 4건, 1건짜리 가맹점 5곳 → 8 / 13 = 0.615…
 
 ### C5 `calc_savings(monthly_totals, labeled, this_month) -> list`
-- 담당: 정하나 / 지원: 안태현 / 리뷰: 고준호 / 완료 목표: 11/15(일)
+- 완료 목표: 11/15(일)
 - 기획서 의사코드
   ```
   결과 = []
@@ -334,7 +286,7 @@ flowchart TB
 - `score`는 반올림하지 않은 float로 저장한다 (표시용 반올림은 C6에서만).
 
 ### C6 `make_suggestion(savings) -> str`
-- 담당: 안태현 / 지원: 고준호 / 리뷰: 정하나 / 완료 목표: 11/15(일)
+- 완료 목표: 11/15(일)
 - 규칙
   1. `savings`가 비어 있으면 `"[제안] 이번 달 절감 여지 없음"` 반환.
   2. `score` 내림차순 정렬 (동점 시 `saving` 큰 순 → 카테고리명 순).
@@ -345,12 +297,12 @@ flowchart TB
   ```
 
 ### `main()`
-- 담당: 정하나 (통합·디버깅 책임자: 고준호, 완료 목표 11/18(수))
+- 완료 목표: 11/18(수)
 - 순서
   1. `cleaned = clean_transactions(transactions)`
   2. `labeled = label_transactions(cleaned, label_rules)`
   3. `labeled = mark_fixed_repeats(labeled)`
-  4. `this_month = max(거래월)` — labeled가 비면 C6가 "절감 여지 없음"을 내도록 빈 savings로 진행
+  4. `this_month = max(거래월)` — labeled가 비면 C6가 "절감 여지 없음"을 내도록 빈 savings로 진행. 거래월이 3개가 아니면("최근 3개월" 전제 위반) 예외 대신 `[경고] 거래월이 N개다 …` 1줄을 반환한다 (조용한 오답 방지, 8장 결정사항 7)
   5. `monthly_totals = sum_by_month_category(labeled)`
   6. `savings = calc_savings(monthly_totals, labeled, this_month)`
   7. `print(make_suggestion(savings))`
@@ -366,15 +318,16 @@ flowchart TB
 2. **월 합계에 없는 달**(해당 카테고리 지출 0원인 달)은 최저 계산에서 제외한다 (기획서 의사코드의 "월별합계 중 최저"를 그대로 따름).
 3. **"최근 3개월"**은 데이터에 존재하는 3개 거래월이다. 더미 데이터는 정확히 2026-07, 2026-08, 2026-09 세 달로 만든다. 이번 달 = 2026-09.
 4. C3에서 재분류해도 `category`는 바꾸지 않고 `is_discretionary`만 `False`로 바꾼다.
-5. 반복 결제 퍼센트 표시는 `round(repeat_ratio * 100)`, 금액은 천 단위 콤마.
+5. 반복 결제 퍼센트 표시는 `round(repeat_ratio * 100)`, 금액은 천 단위 콤마. 파이썬 `round()`는 정확히 `.5`인 값을 짝수로 보내므로 62.5%는 63이 아니라 62로 표시된다.
 6. 같은 날·같은 가맹점·같은 금액의 정상 거래 2건은 C1에서 중복으로 1건만 남는다 (기획서 규칙 그대로 수용한 한계). 더미 데이터에는 의도한 중복 1건 외에 이런 거래를 넣지 않는다.
+7. 거래월이 3개가 아니면 `run_pipeline`은 제안 문장 대신 `[경고] 거래월이 N개다 …` 1줄을 반환한다. 예외를 던지지 않아 Colab "모두 실행"에서 트레이스백이 뜨지 않고, 더미 데이터의 날짜 오타가 "절감 여지 없음"으로 조용히 묻히는 것을 막는다.
 
 ---
 
 ## 9. 더미 데이터 설계 (dummy_data.py)
 
-- 담당: 고준호 / 리뷰: 정하나 / 완료 목표: 11/11(수)
-- 규모: 3개월치 약 30~45건 (성공 기준 수치를 맞추기 위해 30건을 조금 넘어도 됨). 파일 상단과 노트북 셀에 **"더미 데이터"** 명시.
+- 완료 목표: 11/11(수)
+- 규모: 3개월치 약 60에서 70건 (현재 66건, C1 정제 후 64건). 2026-09 카페·간식을 13건·187,000원으로 고정하고 3개 재량 카테고리와 고정 카테고리를 월별로 채우다 보니 당초 "30에서 45건" 추정을 넘었다. 금액 일치(완료 기준)를 건수보다 우선한다. 파일 상단과 노트북 셀에 **"더미 데이터"** 명시.
 - 아래 수치는 **C1 정제 후 기준**으로 정확히 맞춘다.
 
 | 확인 대상 | 목표 |
@@ -400,88 +353,133 @@ flowchart TB
 
 ## 10. 테스트 케이스 (tests/test_pipeline.py)
 
-- 책임: 고준호 / 설계·실행: 안태현 / 완료 목표: 11/18(수). `unittest`만 사용.
+- 완료 목표: 11/18(수). `unittest`만 사용.
 
-| 구분 | 입력 | 기대 결과 |
-|---|---|---|
-| 정상 | 기본 더미 데이터 | `"[제안] 카페·간식: 이번 달 187,000원, 최근 3개월 최저 120,000원(2026-07) → 절감 여지 67,000원, 반복 결제 62%"` |
-| 엣지: 후보 0개 | `transactions_no_saving` | `"[제안] 이번 달 절감 여지 없음"`, 에러 없음 |
-| 엣지: 빈 입력 | `[]` | `"[제안] 이번 달 절감 여지 없음"`, 에러 없음 |
-| 잘못된 입력: 값 누락 | `transactions_missing` | 누락 건이 제외되고 에러 없이 문장 1줄 반환 |
-| 단위: C1 | 취소·중복 포함 목록 | 음수/0 금액, 중복 건 제거 |
-| 단위: C2 | 미매칭 가맹점 | `category="기타"`, `is_discretionary=False`, `month`/`day` 분리 |
-| 단위: C3 | 월 1건·같은 일·같은 금액 가맹점 / 월 2건 이상 가맹점 | 전자만 고정으로 변경, 후자는 재량 유지 |
-| 단위: C4 | 고정 거래 포함 | 재량 거래만 합산 |
-| 단위: calc_repeat_ratio | 8/13 구성, 0건 | 0.615…, 0.0 |
-| 단위: C5 | 이번 달이 최저인 카테고리 | 결과에서 제외 |
-| 단위: C6 | 점수 다른 후보 여러 개 | 점수 1위만 문장화 |
+| 구분 | 입력 | 기대 결과 | 결과 |
+|---|---|---|---|
+| 정상 | 기본 더미 데이터 | `"[제안] 카페·간식: 이번 달 187,000원, 최근 3개월 최저 120,000원(2026-07) → 절감 여지 67,000원, 반복 결제 62%"` | 통과 |
+| 엣지: 후보 0개 | `transactions_no_saving` | `"[제안] 이번 달 절감 여지 없음"`, 에러 없음 | 통과 |
+| 엣지: 빈 입력 | `[]` | `"[제안] 이번 달 절감 여지 없음"`, 에러 없음 | 통과 |
+| 잘못된 입력: 값 누락 | `transactions_missing` | 누락 건이 제외되고 에러 없이 문장 1줄 반환 | 통과 |
+| 단위: C1 | 취소·중복 포함 목록 | 음수/0 금액, 중복 건 제거 | 통과 (4건) |
+| 단위: C2 | 미매칭 가맹점 | `category="기타"`, `is_discretionary=False`, `month`/`day` 분리 | 통과 (3건) |
+| 단위: C3 | 월 1건·같은 일·같은 금액 가맹점 / 월 2건 이상 가맹점 | 전자만 고정으로 변경, 후자는 재량 유지 | 통과 (4건) |
+| 단위: C4 | 고정 거래 포함 | 재량 거래만 합산 | 통과 (2건) |
+| 단위: calc_repeat_ratio | 8/13 구성, 0건 | 0.615…, 0.0 | 통과 (3건) |
+| 단위: C5 | 이번 달이 최저인 카테고리 | 결과에서 제외 | 통과 (3건) |
+| 단위: C6 | 점수 다른 후보 여러 개 | 점수 1위만 문장화 | 통과 (3건) |
 
 노트북 마지막 셀에서는 정상 / 후보 0개 / 값 누락 3가지 결과를 print해 결과표 작성에 쓴다.
 
----
+### 10-1. 실행 결과
 
-## 11. Git 협업 규칙
+- 실행일: 2026-11-09 · 명령: `python -m unittest discover tests -v` · Python 3.9.6
+- **27개 실행, 27개 통과, 실패 0, 오류 0** (0.001초)
 
-- 브랜치: `main`(보호) ← `feature/<이름>-<함수>` (예: `feature/ahn-c1-clean`)
-- PR 리뷰어 = 역할 분담표의 리뷰어. 리뷰 승인 1건 후 merge.
-- 각자 자기 담당 파일만 수정 → 파일 단위 분리로 충돌 최소화.
-- 노트북은 `tools/build_notebook.py`로만 갱신하고 직접 편집하지 않는다. 출력은 비운 채 커밋.
-- 제출용 Colab 링크: GitHub의 노트북을 Colab에서 열어 "모두 실행" 확인 → 공개 설정 → 시크릿 창에서 링크 열림 확인.
+**시나리오별 실제 출력**
 
----
+| 구분 | 입력 | 실제 출력 | 판정 |
+|---|---|---|---|
+| 정상 | 기본 더미 데이터 | `[제안] 카페·간식: 이번 달 187,000원, 최근 3개월 최저 120,000원(2026-07) → 절감 여지 67,000원, 반복 결제 62%` | 기대 문장과 글자 단위로 일치 |
+| 엣지: 후보 0개 | `transactions_no_saving` | `[제안] 이번 달 절감 여지 없음` | 통과 |
+| 엣지: 빈 입력 | `[]` | `[제안] 이번 달 절감 여지 없음` | 통과 |
+| 잘못된 입력: 값 누락 | `transactions_missing` | `[제안] 카페·간식: 이번 달 9,000원, 최근 3개월 최저 3,000원(2026-07) → 절감 여지 6,000원, 반복 결제 0%` | 누락 5건 제외, 에러 없이 1줄 |
 
-## 12. 역할 분담 및 일정
+**테스트 메서드별 결과**
 
-| 모듈 / 작업 | 책임자 | 지원 | 리뷰어 | 완료 목표 |
-|---|---|---|---|---|
-| 더미 데이터 (transactions, label_rules) | 고준호 | 전원 | 정하나 | 11/11(수) |
-| C1 clean_transactions | 안태현 | 고준호 | 정하나 | 11/13(금) |
-| C2 label_transactions | 고준호 | 정하나 | 안태현 | 11/13(금) |
-| C3 mark_fixed_repeats | 고준호 | 안태현 | 정하나 | 11/15(일) |
-| C4 sum_by_month_category | 정하나 | 고준호 | 안태현 | 11/13(금) |
-| C5 calc_savings | 정하나 | 안태현 | 고준호 | 11/15(일) |
-| calc_repeat_ratio | 안태현 | 정하나 | 고준호 | 11/15(일) |
-| C6 make_suggestion | 안태현 | 고준호 | 정하나 | 11/15(일) |
-| main 통합·디버깅·테스트 | 고준호 | 전원 | 전원 | 11/18(수) |
-| 테스트 케이스 | 고준호 | 안태현 | 고준호 | 11/18(수) |
-| 3분 영상 · Miro | 안태현 | 전원 | 정하나 | 11/21(토) |
-
-| 기능 역할 | 담당 |
-|---|---|
-| A · 데이터·로직 (스키마, 샘플 데이터, 핵심 알고리즘) | 고준호 |
-| B · Python 구현·통합 (main 셀, 통합 디버깅, Colab·README) | 정하나 |
-| C · 영상·Miro (발표공간, 원고·편집, 데모 녹화) | 안태현 |
-
-| 마일스톤 | 내용 | 확인자 |
+| 구분 | 테스트 | 결과 |
 |---|---|---|
-| 15주차 수 23:59 | 통합 체크포인트 — "모두 실행" 1회 성공 화면을 LMS 팀 프로젝트방에 공유 | 고준호 |
-| 15주차 금 | 영상 원고 확정 · 대사 배분 | 안태현 |
-| 15주차 일 23:59 | 최종 제출 (Miro · Colab · 영상 링크), 공개 설정 + 시크릿 창 테스트 | 정하나 |
-| 제출 후 수 23:59 | 동료 피드백 2건 각자 제출 | 각자 |
+| 시나리오 | `test_정상_케이스` | 통과 |
+| 시나리오 | `test_엣지_후보_0개` | 통과 |
+| 시나리오 | `test_엣지_빈_입력` | 통과 |
+| 시나리오 | `test_엣지_거래월이_3개가_아님` | 통과 |
+| 시나리오 | `test_잘못된_입력_값_누락` | 통과 |
+| C1 | `test_취소_중복_누락_제거` | 통과 |
+| C1 | `test_원본을_수정하지_않는다` | 통과 |
+| C1 | `test_bool_금액_제외` | 통과 |
+| C1 | `test_숫자가_아닌_날짜_dict가_아닌_항목_문자열이_아닌_가맹점_제외` | 통과 |
+| C2 | `test_미매칭은_기타_고정` | 통과 |
+| C2 | `test_월_일_분리` | 통과 |
+| C2 | `test_규칙표_순서가_우선순위` | 통과 |
+| C3 | `test_월1건_같은일_같은금액은_고정으로_변경` | 통과 |
+| C3 | `test_월_2건_이상이면_재량_유지` | 통과 |
+| C3 | `test_대상_월이_3개가_아니면_보정하지_않는다` | 통과 |
+| C3 | `test_입력을_수정하지_않는다` | 통과 |
+| C4 | `test_재량_거래만_합산` | 통과 |
+| C4 | `test_재량_거래가_없으면_빈_dict` | 통과 |
+| calc_repeat_ratio | `test_8_나누기_13` | 통과 |
+| calc_repeat_ratio | `test_0건이면_0점0` | 통과 |
+| calc_repeat_ratio | `test_모두_1회_가맹점이면_0점0` | 통과 |
+| C5 | `test_이번_달이_최저인_카테고리는_제외` | 통과 |
+| C5 | `test_필드와_값` | 통과 |
+| C5 | `test_최저_동액이면_가장_이른_달` | 통과 |
+| C6 | `test_점수_1위만_문장화` | 통과 |
+| C6 | `test_빈_목록이면_절감_여지_없음` | 통과 |
+| C6 | `test_동점이면_절감_여지_큰_순` | 통과 |
 
 ---
 
-## 13. Claude Code 작업 지침
+## 11. 역할 분담 및 일정
 
-### 구현 순서
-1. 레포 뼈대(3장 구조, `.gitignore`, `src/__init__.py`, README 초안)
-2. `dummy_data.py` — 9장 표의 수치를 먼저 손계산으로 맞춘 뒤 작성
-3. C1 → C2 → C3 → C4 → calc_repeat_ratio → C5 → C6 → main (`run_pipeline` 포함)
-4. `tests/test_pipeline.py` — 10장 케이스 전부
-5. `tools/build_notebook.py` → `notebooks/card_saving_suggester.ipynb` 생성
-6. 생성된 노트북을 Python으로 순서대로 실행해 자체 완결형인지 확인 (src import 없이 동작)
+> 역할 분담은 이 장이 기준이다. 코드 첫 줄의 `# 담당: / 리뷰:` 주석과 노트북 첫 셀의 팀원 표는 이 책임표와 같아야 한다 (가이드 7장 요구). 함수 명세 · README에는 담당자를 따로 적지 않는다.
 
-### 완료 기준 (Definition of Done)
-- [ ] `python -m src.main` 출력이 정상 케이스 기대 문장과 **글자 하나까지 일치**
-- [ ] `python -m unittest discover tests` 전부 통과
-- [ ] 후보 0개·빈 입력·값 누락에서 예외 없이 문장 1줄 반환
-- [ ] 노트북에 `import src` / `from src`가 없고, 위에서 아래로 실행 시 동일 출력
-- [ ] 외부 라이브러리 import 없음 (솔루션 코드 기준)
-- [ ] 함수명·키 이름이 이 문서 및 기획서와 일치, 주석은 한국어
-- [ ] 각 함수 docstring에 Input / Process / Output 한 줄씩 명시
+### 11-1. 모듈(함수) 책임표
 
-### 하지 말 것
-- 함수명 변경, 함수 병합·추가 분할 (보조 헬퍼는 같은 파일 안 `_` 접두 함수로만)
-- 실제 CSV 읽기, pandas 등 외부 라이브러리, 머신러닝
-- 제안 2건 이상 출력, 예산 설정·결제 차단 같은 범위 밖 기능
-- 승인번호·할부 개월·사업자번호·업종 태그 필드 추가 (Drop 결정)
+| 모듈 / 함수명 | 입력 → 출력 | 책임자(1명) | 지원 | 리뷰어 | 완료 목표 |
+|---|---|---|---|---|---|
+| 더미 데이터 (transactions, label_rules) | 없음 → 더미 거래 66건, 규칙표 | 안태현 | 전원 | 고준호 | 11/11(수) |
+| C1 clean_transactions | transactions → cleaned | 정하나 | 안태현 | 고준호 | 11/13(금) |
+| C2 label_transactions | cleaned, label_rules → labeled | 안태현 | 고준호 | 정하나 | 11/13(금) |
+| C3 mark_fixed_repeats | labeled → 보정된 labeled | 안태현 | 정하나 | 고준호 | 11/15(일) |
+| C4 sum_by_month_category | labeled → monthly_totals | 고준호 | 안태현 | 정하나 | 11/13(금) |
+| C5 calc_savings | monthly_totals, labeled → savings | 고준호 | 정하나 | 안태현 | 11/15(일) |
+| calc_repeat_ratio | labeled, category, month → 비율 | 정하나 | 고준호 | 안태현 | 11/15(일) |
+| C6 make_suggestion | savings → 제안 문장 | 정하나 | 안태현 | 고준호 | 11/15(일) |
+| main 통합 · 디버깅 · 테스트 | C1~C6 연결 → 최종 출력 | 고준호 | 전원 | 전원 | 11/18(수) |
+| 테스트 케이스 (정상 · 엣지 · 잘못된 입력) | 없음 → 테스트 결과표 | 고준호 | 정하나 | 안태현 | 11/18(수) |
+| 3분 영상 · Miro | 없음 → 영상, Zone 4·5 | 정하나 | 전원 | 전원 | 11/21(토) |
+
+- **기획서 대비 변경**
+  - 기능 역할을 재배정했다: A 고준호 → **안태현**, B 정하나 → **고준호**, C 안태현 → **정하나**. 역할에 맞춰 함수 책임도 옮겼다 (데이터·로직 함수 안태현, 통합 · 구현 고준호, 영상 · Miro 정하나).
+  - 3분 영상 · Miro: 책임자를 정하나로 두고 지원과 리뷰어는 전원(기획서의 리뷰어는 정하나), 영상은 팀원 전원이 본인 목소리로 대사를 녹음한다 (영상 규정).
+  - 테스트 케이스: 기획서의 리뷰어(고준호, 책임자와 같았음)를 **안태현**으로 바꿨다.
+- **더미 데이터 건수**: 기획서는 "거래 30건"이었으나 9장 수치를 맞추느라 실제는 66건이다 (9장 참고).
+
+### 11-2. 기능 역할 배정
+
+| 기능 역할 | 주요 일 | 담당 이름 |
+|---|---|---|
+| A · 데이터·로직 | 데이터 스키마 · 샘플 데이터, 핵심 알고리즘 설계 | 안태현 |
+| B · Python 구현·통합 | 통합 노트북(main 셀) 관리, 통합 디버깅 | 고준호 |
+| C · 영상·Miro | Miro 발표공간 구성, 영상 원고·편집, 데모 녹화 | 정하나 (대사 녹음은 전원) |
+
+### 11-3. 마일스톤
+
+| 마일스톤 | 내용 |
+|---|---|
+| 15주차 수 23:59 | 통합 체크포인트 — "모두 실행" 1회 성공 화면을 LMS 팀 프로젝트방에 공유 |
+| 15주차 금 | 영상 원고 확정 · 대사 배분 |
+| 15주차 일 23:59 | 최종 제출 (Miro · Colab · 영상 링크), Miro 링크 버튼 3개 · Zone 4·5 완성, 공개 설정 + 시크릿 창 테스트 |
+| 제출 후 수 23:59 (11/25) | 동료 피드백 2건 제출 (LMS 15주차 토론) + 각 보드에 Miro 댓글 1개 이상 |
+| 제출 후 금 23:59 (11/27) | 성찰 에세이(400자에서 600자, PDF) + 팀 기여도 평가 제출 (LMS 15주차 과제, 각자) |
+
+---
+
+## 12. 이슈 해결 목록
+
+> 점검 범위: `src/`, `tests/`, `tools/`, `notebooks/` · 12건 전부 해결
+
+| # | 이슈 | 해결 |
+|---|---|---|
+| 1 | 거래월이 3개가 아니면 에러 없이 `[제안] 이번 달 절감 여지 없음`이 나오는 조용한 오답 (날짜 오타 하나로 재현) | `run_pipeline`에 거래월 3개 가드를 추가해 `[경고] 거래월이 N개다 …` 1줄을 반환. 테스트 추가, plan.md 7장 `main()`·8장 결정사항 7 반영 |
+| 2 | 한글 지역 변수가 plan.md 4장 "지역 변수도 snake_case" 규칙을 위반 (제출 노트북 마지막 셀에도 노출) | `tests/`, `tools/build_notebook.py`의 한글 변수 11종을 영어 snake_case로 치환하고 노트북 재생성 |
+| 3 | C1을 통과한 거래가 C2에서 예외를 냄 (`2026-09-XX`, 문자열이 아닌 `merchant`, dict가 아닌 항목) | C1에서 날짜 숫자 자리, `dict` 여부, `merchant` 자료형까지 검증. 테스트 추가, plan.md 7장 C1 규칙 5·6 반영 |
+| 4 | `round()`가 `.5`를 짝수로 보내 62.5%가 63이 아닌 62로 표시됨 | plan.md 8장 결정사항 5에 동작을 명시하고 현재 식비 반복 비율(0.625)을 기준으로 주의사항 기록 |
+| 5 | `run_pipeline`의 파라미터가 모듈 전역 `transactions`, `label_rules`를 가림 | 가려지는 범위가 함수 안으로 한정되고 결과에 영향이 없음을 확인해 종결 (코드 변경 없음) |
+| 6 | 더미 거래가 66건인데 plan.md 9장은 "약 30에서 45건"으로 기재 | plan.md 9장을 "약 60에서 70건(현재 66건, C1 정제 후 64건)"으로 수정하고 사유 명시 |
+| 7 | 상수를 `dummy_data.py`가 아니라 사용 모듈 상단에 둠 (4장 예시와 불일치) | plan.md 4장을 "사용하는 모듈 상단"으로 고치고 `# notebook:skip`과의 관계(노트북 `NameError` 방지)를 명시 |
+| 8 | 노트북이 `main` 정의 셀과 `main()` 호출 셀로 나뉘는데 plan.md 3-1장은 한 항목으로 기재 | plan.md 3-1장 4번 항목을 실제 셀 구성에 맞게 수정 |
+| 9 | 노트북 첫 셀에 가이드가 요구한 "실행 방법"과 "팀원·담당 함수"가 없고, 코드 셀 첫 줄 `# 담당: / 리뷰:` 주석도 없음 | 첫 셀에 실행 방법과 팀원·담당 표를 추가하고, 모든 `src/*.py` 첫 줄에 담당·리뷰어 주석을 달아 노트북 셀에도 반영 |
+| 10 | 추상화(Keep/Drop)·패턴이 문서와 노트북에 드러나지 않고, 아키텍처 그림에 단계 사이 데이터 이름이 없음 | 노트북에 "사고 과정" 셀, plan.md 6-3장 추가. 그림 화살표에 `transactions`, `cleaned`, `labeled`, `monthly_totals`, `savings` 표기 |
+| 11 | 가이드는 실행 결과가 출력된 채로 제출하라는데 plan.md는 출력 비움이었고, 재빌드하면 저장된 출력이 지워짐 | `build_notebook.py`가 코드 셀을 실행해 출력까지 저장하도록 변경 (`--no-output`으로 비움). plan.md 3-1장 정책 수정 |
+| 12 | plan.md 마일스톤에 성찰 에세이·기여도 평가(11/27)와 Miro Zone 4·5, 동료 피드백 Miro 댓글이 없음 | plan.md 11-3장 마일스톤에 추가 |

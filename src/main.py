@@ -1,4 +1,6 @@
-"""main — C1~C6 연결 / 담당: 정하나 (통합·디버깅: 고준호)."""
+# 담당: 고준호 / 리뷰: 전원
+# AI 보조: Claude Code — 파이프라인 연결, 거래월 3개 가드, 담당자가 검토·테스트
+"""main — C1~C6 연결."""
 
 from src.c1_clean import clean_transactions          # notebook:skip
 from src.c2_label import label_transactions          # notebook:skip

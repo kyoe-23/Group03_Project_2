@@ -1,4 +1,6 @@
-"""반복 결제 비율 (C5 보조) — 담당: 안태현 / 지원: 정하나 / 리뷰: 고준호."""
+# 담당: 정하나 / 리뷰: 안태현
+# AI 보조: Claude Code — 반복 결제 비율 계산, 담당자가 검토·테스트
+"""반복 결제 비율 (C5 보조)."""
 
 
 def calc_repeat_ratio(labeled, category, month):
