@@ -1,5 +1,4 @@
 # 담당: 고준호 / 리뷰: 안태현
-# AI 보조: Claude Code — 테스트 케이스 작성(시나리오와 함수별 단위 테스트), 담당자가 검토·테스트
 """테스트 케이스 — 표준 라이브러리 unittest만 사용.
 
 메서드 이름은 한국어로 둔다. `python -m unittest discover tests -v` 출력이

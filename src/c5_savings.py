@@ -1,5 +1,4 @@
 # 담당: 고준호 / 리뷰: 안태현
-# AI 보조: Claude Code — 절감 여지·점수 계산, 담당자가 검토·테스트
 """C5 절감 여지·점수 계산."""
 
 from src.c5_repeat_ratio import calc_repeat_ratio  # notebook:skip
